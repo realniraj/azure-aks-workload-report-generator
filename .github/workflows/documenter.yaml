@@ -1,0 +1,118 @@
+name: AKS Cluster Documentation Generator
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    # Runs at 2:00 AM UTC every Sunday
+    - cron: '0 2 * * 0'
+
+permissions:
+  id-token: write # Required for OIDC login to Azure
+  contents: write # Required to commit reports back to the repository
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Check out repository
+        uses: actions/checkout@v4
+      
+      - name: 2. Login to Azure via Federated Identity (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false # Speeds up login
+
+      - name: 3. Set up kubelogin for non-interactive login
+        uses: azure/use-kubelogin@v1.2
+        with:
+          kubelogin-version: 'v0.0.24'
+
+      - name: 4. Set up kubectl context
+        # This action automatically uses the OIDC-authenticated session from the previous step
+        # and configures kubelogin for non-admin AAD authentication.
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP_NAME }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+          admin: false
+          use-kubelogin: true
+      
+      - name: 5. Install Dependencies
+        run: |
+          echo "Installing yq for YAML processing..."
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+          echo "yq version $(yq --version)"
+          # jq is usually pre-installed, but this ensures it's available
+          sudo apt-get update && sudo apt-get install -y jq
+
+      - name: 6. Install Popeye for Health Reports
+        run: |
+          echo "Installing Popeye..."
+          curl -sL https://github.com/derailed/popeye/releases/latest/download/popeye_Linux_amd64.tar.gz | tar xz
+          sudo mv popeye /usr/local/bin/popeye
+          echo "Popeye version $(popeye version)"
+
+      - name: 7. Install Kubescape for Security Reports
+        run: |
+          echo "Installing Kubescape..."
+          curl -s https://raw.githubusercontent.com/kubescape/kubescape/master/install.sh | sudo /bin/bash
+
+
+      - name: 8. Generate Reports
+        # Give the step an ID so we can reference its outputs later
+        id: reporter 
+        run: |
+          # Create a directory for today's reports
+          REPORT_DIR="reports/$(date +'%Y-%m-%d')"
+          mkdir -p "${REPORT_DIR}"
+          
+          # This line exports the REPORT_DIR path as an output for other steps to use
+          echo "report_dir=${REPORT_DIR}" >> "$GITHUB_OUTPUT"
+          
+          echo "Running Popeye scan..."
+          # STEP 1: Run Popeye with both flags. This will save the report to a temp directory.
+          # We just give it the base filename.
+          popeye --save --output-file "health-report.html" --out html
+          
+          # STEP 2: Find the report Popeye just created in its temp directory.
+          # The `find` command locates it, and `head -n 1` ensures we only get one file path.
+          SAVED_REPORT_PATH=$(find /tmp/popeye -name "health-report.html" -type f | head -n 1)
+
+          # STEP 3: Move the report from the temp directory into our correct reports folder.
+          if [ -f "$SAVED_REPORT_PATH" ]; then
+            echo "Moving Popeye report from $SAVED_REPORT_PATH to ${REPORT_DIR}/"
+            mv "$SAVED_REPORT_PATH" "${REPORT_DIR}/health-report.html"
+          else
+            echo "::warning::Could not find a Popeye report to move."
+          fi
+          
+          echo "Running Kubescape scan..."
+          kubescape scan --format html --output "${REPORT_DIR}/security-report.html"
+
+          echo "Generating custom workload reports..."
+          bash ./scripts/generate-workload-report.sh > "${REPORT_DIR}/workload-inventory.md"
+          bash ./scripts/generate-ingress-report.sh > "${REPORT_DIR}/ingress-inventory.md"
+          bash ./scripts/generate-netpol-report.sh > "${REPORT_DIR}/network-policy-inventory.md"
+          
+          echo "Reports generated in ${REPORT_DIR}"
+
+      # NEW - Add this step to see what files are in the workspace
+      - name: DEBUG - List files in the workspace
+        run: |
+          echo "Listing all files in the current directory..."
+          ls -R
+      
+      - name: 9. Commit Reports
+        # FIX: Using the correct, current version of the action (v6)
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          commit_message: "docs: Generate weekly cluster reports for $(date +'%Y-%m-%d')"
+          # FIX: Referencing the output from the previous step to get the correct path
+          file_pattern: "${{ steps.reporter.outputs.report_dir }}/*.html ${{ steps.reporter.outputs.report_dir }}/*.md"
+          commit_user_name: "GitHub Actions Bot"
+          commit_user_email: "actions-bot@github.com"
+          commit_author: "GitHub Actions Bot <actions-bot@github.com>"
