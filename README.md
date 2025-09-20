@@ -1,10 +1,10 @@
-# Automated AKS Workload Documentation Generator
+# Automated AKS Workload Report Generator
 
 This repository contains a complete, automated solution for generating daily documentation about the workloads and security posture of an Azure Kubernetes Service (AKS) cluster. It uses a GitHub Actions workflow to run a suite of powerful open-source tools, generating reports in easy-to-read formats like Markdown and HTML, and then commits them back to this repository.
 
 This provides a version-controlled, historical record of your cluster's state, which is invaluable for auditing, compliance, onboarding, and operational awareness.
 
-> **Security Enhancement**: This workflow uses OIDC (OpenID Connect) to establish a federated identity trust between GitHub Actions and Azure. This modern approach is more secure as it eliminates the need to store long-lived Azure client secrets in your GitHub repository secrets.
+> **Security Enhancement**: This workflow uses OIDC (OpenID Connect) to establish a federated identity trust between **Azure** and **GitHub**. This allows the workflow to securely authenticate GitHub Actions and Azure. This modern approach is more secure as it eliminates the need to store long-lived Azure client secrets in your GitHub repository secrets.
 
 ## Features
 
