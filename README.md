@@ -4,7 +4,7 @@ This repository contains a complete, automated solution for generating daily doc
 
 This provides a version-controlled, historical record of your cluster's state, which is invaluable for auditing, compliance, onboarding, and operational awareness.
 
-> **Security Enhancement**: This workflow uses OIDC (OpenID Connect) to establish a federated identity trust between **Azure** and **GitHub**. This allows the workflow to securely authenticate GitHub Actions and Azure. This modern approach is more secure as it eliminates the need to store long-lived Azure client secrets in your GitHub repository secrets.
+> **Security Enhancement**: This workflow uses **OIDC (OpenID Connect)** to establish a federated identity trust between **Azure** and **GitHub**. This allows the workflow to securely authenticate GitHub Actions and Azure. This modern approach is more secure as it eliminates the need to store long-lived Azure client secrets in your GitHub repository secrets.
 
 ## Features
 
