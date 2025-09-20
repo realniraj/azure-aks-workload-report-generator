@@ -1,4 +1,4 @@
-name: AKS Cluster Documentation Generator
+name: AKS Cluster Report Generator
 
 on:
   workflow_dispatch: # Allows manual triggering
