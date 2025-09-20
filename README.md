@@ -37,7 +37,7 @@ graph TD
     subgraph aks["3. AKS Interaction & Report Generation"]
         B -->|Uses Token to get kubeconfig| E[Azure AKS Control Plane]
         E --> F((AKS Cluster))
-        B --> G["Install Tools: popeye, kubescape, yq"]
+        B --> G["Install Tools: popeye, kubescape, yq, jq"]
         G --> H{Run Scans & Scripts}
         H -- Scans & Queries --> F
         F -- Returns Cluster State --> H
@@ -64,6 +64,7 @@ graph TD
         *   `popeye`: For scanning the cluster for misconfigurations and potential issues.
         *   `kubescape`: For security posture analysis against hardening guides.
         *   `yq`: A command-line YAML processor used by the custom scripts.
+        *   `jq`: A command-line JSON processor used by the custom scripts.
     *   The workflow then executes a series of **scans and custom scripts** against the AKS cluster. These tools query the cluster's state, including deployments, network policies, and ingress controllers.
     *   The cluster returns the requested information to the workflow.
     *   The workflow processes this information and generates a set of reports in both **HTML and Markdown formats**.
