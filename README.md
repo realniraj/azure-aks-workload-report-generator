@@ -50,6 +50,28 @@ graph TD
     end
 ```
 
+### Flow Diagram
+
+1.  **Trigger**: The process begins with a **trigger**, which can be a **scheduled event** (e.g., a cron job running at a specific time) or a **manual invocation** of the **GitHub Actions workflow**. This trigger initiates the entire documentation generation process.
+2.  **Authentication**:
+    *   The **GitHub Actions workflow** requests an **OIDC (OpenID Connect) token** from **GitHub's OIDC provider**.
+    *   The workflow then presents this OIDC token to **Azure Active Directory (Azure AD)**.
+    *   **Azure AD** validates the token against the pre-configured **federated credential**, confirming that the request is from the trusted GitHub repository and branch.
+    *   Upon successful validation, **Azure AD** issues a short-lived **Azure access token** back to the workflow. This token grants the workflow the necessary permissions to interact with Azure resources.
+3.  **AKS Interaction & Report Generation**:
+    *   With the **Azure access token**, the workflow authenticates to the **Azure AKS control plane** and retrieves a `kubeconfig` file. This file allows the workflow to securely connect to the AKS cluster.
+    *   The workflow installs a suite of open-source tools required for the analysis:
+        *   `popeye`: For scanning the cluster for misconfigurations and potential issues.
+        *   `kubescape`: For security posture analysis against hardening guides.
+        *   `yq`: A command-line YAML processor used by the custom scripts.
+    *   The workflow then executes a series of **scans and custom scripts** against the AKS cluster. These tools query the cluster's state, including deployments, network policies, and ingress controllers.
+    *   The cluster returns the requested information to the workflow.
+    *   The workflow processes this information and generates a set of reports in both **HTML and Markdown formats**.
+4.  **Store & Version Control**:
+    *   The newly generated reports are **committed and pushed** to the **GitHub repository**.
+    *   This action updates the repository with the latest documentation, creating a **version-controlled history** of the cluster's state over time.
+
+
 ## Repository Structure
 
 ```
