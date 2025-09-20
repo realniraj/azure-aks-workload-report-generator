@@ -116,7 +116,7 @@ If your cluster disables local admin accounts and uses an Azure AD group as the 
 az ad group show --group "$GROUP_NAME" --query "{id:objectId,displayName:displayName}" -o json
 ```
 
-1. Find the service principal object id for your AAD application (created earlier):
+2. Find the service principal object id for your AAD application (created earlier):
 
 ```bash
 # If you have the APP_ID (application/appId), get the service principal id
@@ -124,7 +124,7 @@ SP_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv)
 echo "Service Principal object id: $SP_ID"
 ```
 
-1. Add the service principal to the group:
+3. Add the service principal to the group:
 
 ```bash
 az ad group member add --group "$GROUP_NAME" --member-id "$SP_ID"
