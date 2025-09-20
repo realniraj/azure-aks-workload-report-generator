@@ -29,7 +29,7 @@ graph TD
 
     subgraph auth["2. Authentication"]
         B -->|Requests OIDC Token| C[GitHub OIDC Provider]
-        B -->|Presents Token to Azure AD| D[Azure Active Directory]
+        B -->|Presents Token to Entra ID| D[Entra ID]
         D -->|Validates Federated Credential| D
         D -->|Issues Azure Access Token| B
     end
@@ -55,9 +55,9 @@ graph TD
 1.  **Trigger**: The process begins with a **trigger**, which can be a **scheduled event** (e.g., a cron job running at a specific time) or a **manual invocation** of the **GitHub Actions workflow**. This trigger initiates the entire documentation generation process.
 2.  **Authentication**:
     *   The **GitHub Actions workflow** requests an **OIDC (OpenID Connect) token** from **GitHub's OIDC provider**.
-    *   The workflow then presents this OIDC token to **Azure Active Directory (Azure AD)**.
-    *   **Azure AD** validates the token against the pre-configured **federated credential**, confirming that the request is from the trusted GitHub repository and branch.
-    *   Upon successful validation, **Azure AD** issues a short-lived **Azure access token** back to the workflow. This token grants the workflow the necessary permissions to interact with Azure resources.
+    *   The workflow then presents this OIDC token to **Entra ID**.
+    *   **Entra ID** validates the token against the pre-configured **federated credential**, confirming that the request is from the trusted GitHub repository and branch.
+    *   Upon successful validation, **Entra ID** issues a short-lived **Azure access token** back to the workflow. This token grants the workflow the necessary permissions to interact with Azure resources.
 3.  **AKS Interaction & Report Generation**:
     *   With the **Azure access token**, the workflow authenticates to the **Azure AKS control plane** and retrieves a `kubeconfig` file. This file allows the workflow to securely connect to the AKS cluster.
     *   The workflow installs a suite of open-source tools required for the analysis:
@@ -94,9 +94,9 @@ Before you can use this repository, you must establish a federated identity trus
 You will need:
 
 - An active AKS cluster that you want to document.
-- Permissions to create and manage Azure AD Applications and assign roles in your Azure subscription.
+- Permissions to create and manage Entra ID Applications and assign roles in your Azure subscription.
 
-### 1. Create an Azure AD Application and Service Principal
+### 1. Create an Entra ID Application and Service Principal
 
 This identity will be granted access to your cluster.
 
@@ -129,9 +129,9 @@ az role assignment create --assignee $APP_ID --role "Azure Kubernetes Service Cl
 
 ### 2.a If AKS local login/admin accounts are disabled (AAD group is cluster-admin)
 
-If your cluster disables local admin accounts and uses an Azure AD group as the cluster admin (recommended for tighter control), you'll need to add the newly-created service principal (the App) to that Azure AD group. Doing so gives the application the same admin privileges as members of the group and allows the workflow to obtain a kubeconfig using the federated identity.
+If your cluster disables local admin accounts and uses an Entra ID group as the cluster admin (recommended for tighter control), you'll need to add the newly-created service principal (the App) to that Entra ID group. Doing so gives the application the same admin privileges as members of the group and allows the workflow to obtain a kubeconfig using the federated identity.
 
-1. Identify the Azure AD group that is configured as cluster-admin (replace with your group's display name or object id):
+1. Identify the Entra ID group that is configured as cluster-admin (replace with your group's display name or object id):
 
 ```bash
 # e.g. GROUP_NAME="aks-cluster-admins"
@@ -155,13 +155,13 @@ echo "Added service principal $SP_ID to group $GROUP_NAME"
 
 Notes:
 
-- You must have permission to manage Azure AD groups to run these commands (e.g., Global Admin or Privileged role that can manage group membership).
+- You must have permission to manage Entra ID groups to run these commands (e.g., Global Admin or Privileged role that can manage group membership).
 - After adding the SP to the group, the federated identity + `azure/aks-set-context` step in the workflow will be able to acquire the non-admin kubeconfig (or admin kubeconfig depending on your group mapping).
 
 
 ### 3. Create the Federated Credential
 
-This is the crucial step that creates the trust. It tells your Azure AD application to trust authentication tokens coming from your specific GitHub repository.
+This is the crucial step that creates the trust. It tells your Entra ID application to trust authentication tokens coming from your specific GitHub repository.
 
 ```bash
 # IMPORTANT: Replace <YOUR_GITHUB_ORG/USERNAME> and <YOUR_REPO_NAME>
@@ -178,9 +178,9 @@ az ad app federated-credential create --id $APP_ID --parameters "$FED_CRED_JSON"
 
 ### 4. Configure Group Claims for the Application Registration
 
-> **Note**: To enable your application to make authorization decisions based on a user's group membership, you need to configure its Azure AD application registration to include group claims in the tokens it issues. This allows your application to receive the user's group information directly within the ID or access token.
+> **Note**: To enable your application to make authorization decisions based on a user's group membership, you need to configure its Entra ID application registration to include group claims in the tokens it issues. This allows your application to receive the user's group information directly within the ID or access token.
 
-The following command updates the application's manifest, instructing Azure AD to include the object IDs of the user's security groups in the `groups` claim.
+The following command updates the application's manifest, instructing Entra ID to include the object IDs of the user's security groups in the `groups` claim.
 
 ```bash
 # Configure the application to emit security group claims in the token.
@@ -193,7 +193,7 @@ az ad app update --id $APP_ID --set groupMembershipClaims=SecurityGroup
 
 In your GitHub repository, go to **`Settings > Secrets and variables > Actions`** and create the following secrets. *Note that `AZURE_CLIENT_SECRET` is **not** needed.*
 
-- **`AZURE_CLIENT_ID`**: The `appId` (Client ID) of the Azure AD application you created.
+- **`AZURE_CLIENT_ID`**: The `appId` (Client ID) of the Entra ID application you created.
 - **`AZURE_TENANT_ID`**: Your Azure Tenant ID. You can get this with `az account show --query tenantId -o tsv`.
 - **`AZURE_SUBSCRIPTION_ID`**: Your Azure Subscription ID.
 - **`AKS_RESOURCE_GROUP_NAME`**: The name of the resource group containing your AKS cluster.
