@@ -70,6 +70,7 @@ graph TD
 Before you can use this repository, you must establish a federated identity trust between Azure and GitHub. This allows the workflow to securely authenticate without a client secret.
 
 You will need:
+
 - An active AKS cluster that you want to document.
 - Permissions to create and manage Azure AD Applications and assign roles in your Azure subscription.
 
@@ -168,13 +169,13 @@ az ad app update --id $APP_ID --set groupMembershipClaims=SecurityGroup
 
 ### 5. Configure GitHub Repository Secrets
 
-In your GitHub repository, go to `Settings > Secrets and variables > Actions` and create the following secrets. Note that `AZURE_CLIENT_SECRET` is **not** needed.
+In your GitHub repository, go to **`Settings > Secrets and variables > Actions`** and create the following secrets. *Note that `AZURE_CLIENT_SECRET` is **not** needed.*
 
-- `AZURE_CLIENT_ID`: The `appId` (Client ID) of the Azure AD application you created.
-- `AZURE_TENANT_ID`: Your Azure Tenant ID. You can get this with `az account show --query tenantId -o tsv`.
-- `AZURE_SUBSCRIPTION_ID`: Your Azure Subscription ID.
-- `AKS_RESOURCE_GROUP_NAME`: The name of the resource group containing your AKS cluster.
-- `AKS_CLUSTER_NAME`: The name of your AKS cluster.
+- **`AZURE_CLIENT_ID`**: The `appId` (Client ID) of the Azure AD application you created.
+- **`AZURE_TENANT_ID`**: Your Azure Tenant ID. You can get this with `az account show --query tenantId -o tsv`.
+- **`AZURE_SUBSCRIPTION_ID`**: Your Azure Subscription ID.
+- **`AKS_RESOURCE_GROUP_NAME`**: The name of the resource group containing your AKS cluster.
+- **`AKS_CLUSTER_NAME`**: The name of your AKS cluster.
 
 ## Setup Instructions
 
@@ -182,7 +183,7 @@ In your GitHub repository, go to `Settings > Secrets and variables > Actions` an
 2. Create a new, empty repository on GitHub to host your documentation.
 3. Push the cloned files to your new GitHub repository.
 4. Configure the OIDC Trust and GitHub Secrets as described in the "Prerequisites" section.
-5. Enable Read and Write Permissions for the Workflow: Go to `Settings > Actions > General`, scroll down to "Workflow permissions," and select "Read and write permissions." This is required for the workflow to commit the generated reports back to the repository.
+5. Enable Read and Write Permissions for the Workflow: Go to **`Settings > Actions > General`**, scroll down to "Workflow permissions," and select "Read and write permissions." This is required for the workflow to commit the generated reports back to the repository.
 
 ## How It Works
 
