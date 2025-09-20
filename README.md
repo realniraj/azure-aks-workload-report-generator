@@ -112,23 +112,23 @@ If your cluster disables local admin accounts and uses an Azure AD group as the 
 1. Identify the Azure AD group that is configured as cluster-admin (replace with your group's display name or object id):
 
 ```bash
-# e.g. GROUP_NAME="aks-cluster-admins"
-az ad group show --group "$GROUP_NAME" --query "{id:objectId,displayName:displayName}" -o json
+    # e.g. GROUP_NAME="aks-cluster-admins"
+    az ad group show --group "$GROUP_NAME" --query "{id:objectId,displayName:displayName}" -o json
 ```
 
 2. Find the service principal object id for your AAD application (created earlier):
 
 ```bash
-# If you have the APP_ID (application/appId), get the service principal id
-SP_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv)
-echo "Service Principal object id: $SP_ID"
+    # If you have the APP_ID (application/appId), get the service principal id
+    SP_ID=$(az ad sp show --id "$APP_ID" --query id -o tsv)
+    echo "Service Principal object id: $SP_ID"
 ```
 
 3. Add the service principal to the group:
 
 ```bash
-az ad group member add --group "$GROUP_NAME" --member-id "$SP_ID"
-echo "Added service principal $SP_ID to group $GROUP_NAME"
+    az ad group member add --group "$GROUP_NAME" --member-id "$SP_ID"
+    echo "Added service principal $SP_ID to group $GROUP_NAME"
 ```
 
 Notes:
