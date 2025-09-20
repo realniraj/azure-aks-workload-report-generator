@@ -1,6 +1,6 @@
 # Automated AKS Workload Report Generator
 
-This repository contains a complete, automated solution for generating daily documentation about the workloads and security posture of an Azure Kubernetes Service (AKS) cluster. It uses a GitHub Actions workflow to run a suite of powerful open-source tools, generating reports in easy-to-read formats like Markdown and HTML, and then commits them back to this repository.
+This repository contains a complete, automated solution for generating weekly documentation about the workloads and security posture of an Azure Kubernetes Service (AKS) cluster. It uses a GitHub Actions workflow to run a suite of powerful open-source tools, generating reports in easy-to-read formats like Markdown and HTML, and then commits them back to this repository.
 
 This provides a version-controlled, historical record of your cluster's state, which is invaluable for auditing, compliance, onboarding, and operational awareness.
 
